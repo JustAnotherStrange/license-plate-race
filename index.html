@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>License Plate Race</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  :root { --bg:#f3f4f6; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0b0f17; --card:#161c28; --text:#f3f4f6; --muted:#9ca3af; --line:#263042; }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.3 system-ui,-apple-system,sans-serif; padding-bottom:40px; }
+  header { position:sticky; top:0; z-index:5; background:var(--bg); padding:10px 12px 8px; border-bottom:1px solid var(--line); }
+  .score { display:flex; gap:8px; }
+  .team { flex:1; background:var(--card); border-radius:12px; padding:8px 12px; border-top:4px solid var(--c); }
+  .team .n { font-size:13px; color:var(--muted); display:flex; justify-content:space-between; }
+  .team .v { font-size:30px; font-weight:700; }
+  .team .v small { font-size:14px; color:var(--muted); font-weight:400; }
+  .team.me .n::after { content:"you"; color:var(--c); font-weight:600; }
+  .team .n span:first-child { order:0; }
+  #status { font-size:12px; color:var(--muted); margin-top:6px; display:flex; justify-content:space-between; }
+  #status button { background:none; border:0; color:var(--muted); text-decoration:underline; font:inherit; padding:0; }
+  h2 { margin:18px 12px 8px; font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:8px; padding:0 12px; }
+  .tile { position:relative; background:var(--card); border:1px solid var(--line); border-radius:12px; min-height:84px; padding:8px; overflow:hidden; cursor:pointer; user-select:none; display:flex; flex-direction:column; justify-content:flex-end; }
+  .tile .code { font-weight:700; font-size:20px; position:relative; }
+  .tile .nm { font-size:11px; color:var(--muted); position:relative; }
+  .tile.has-img { color:#fff; }
+  .tile.has-img .nm { color:#e5e7eb; }
+  .tile .bg { position:absolute; inset:0; background-size:cover; background-position:center; }
+  .tile .bg::after { content:""; position:absolute; inset:0; background:linear-gradient(transparent 30%, rgba(0,0,0,.75)); }
+  .dots { position:absolute; top:6px; left:6px; display:flex; gap:4px; z-index:1; }
+  .dot { width:14px; height:14px; border-radius:50%; border:2px solid var(--line); background:transparent; }
+  .dot.on { background:var(--c); border-color:var(--c); }
+  .tile.me-on { box-shadow:inset 0 0 0 2px var(--mine); }
+  .cam { position:absolute; top:3px; right:3px; z-index:2; background:rgba(0,0,0,.45); color:#fff; border:0; border-radius:8px; width:30px; height:30px; font-size:15px; }
+  #who { position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:20; }
+  #who .box { background:var(--card); padding:22px; border-radius:16px; width:min(340px,90vw); text-align:center; }
+  #who button { display:block; width:100%; margin-top:10px; padding:14px; font-size:18px; border:0; border-radius:12px; color:#fff; font-weight:600; }
+  #lb { position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; z-index:30; }
+  #lb img { max-width:95vw; max-height:85vh; border-radius:8px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="score" id="score"></div>
+  <div id="status"><span id="net"></span><button id="switch">switch car</button></div>
+</header>
+<div id="boards"></div>
+
+<div id="who"><div class="box"><div style="font-size:18px;font-weight:600">Which car are you in?</div><div id="whoBtns"></div></div></div>
+<div id="lb"><img alt=""></div>
+<input type="file" accept="image/*" capture="environment" id="file" hidden>
+
+<script src="config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+const CFG = window.GAME_CONFIG;
+const REGIONS = {
+  "US States": { AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",CT:"Connecticut",DE:"Delaware",FL:"Florida",GA:"Georgia",HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming" },
+  "Other US": { DC:"Washington D.C." },
+  "Canada": { AB:"Alberta",BC:"British Columbia",MB:"Manitoba",NB:"New Brunswick",NL:"Newfoundland & Labrador",NS:"Nova Scotia",ON:"Ontario",PE:"Prince Edward Island",QC:"Quebec",SK:"Saskatchewan",NT:"Northwest Territories",NU:"Nunavut",YT:"Yukon" },
+};
+const ALL = Object.values(REGIONS).flatMap(r => Object.keys(r));
+const TEAMS = CFG.teams, IDS = Object.keys(TEAMS);
+const $ = s => document.querySelector(s);
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+let me = load("plate.me", null);
+// state[teamId][code] = {t: ms, d?: 1 (removed), img?: dataURL}
+let state = load("plate.state", {}); IDS.forEach(i => state[i] ||= {});
+let db = null, online = false, lastSync = load("plate.lastSync", null);
+
+// ---- Firebase (optional) ----
+if (CFG.firebase.databaseURL && window.firebase) {
+  firebase.initializeApp(CFG.firebase);
+  db = firebase.database();
+  db.ref(".info/connected").on("value", s => { online = !!s.val(); if (online) pushAll(); renderStatus(); });
+  IDS.forEach(id => db.ref(`${CFG.room}/${id}`).on("value", snap => {
+    const remote = snap.val() || {};
+    mergeInto(id, remote);
+    lastSync = Date.now(); save("plate.lastSync", lastSync);
+    persist(); render();
+    if (id === me) pushAll();
+  }));
+}
+
+function mergeInto(id, remote) {
+  for (const [code, r] of Object.entries(remote)) {
+    const l = state[id][code];
+    if (!l || r.t > l.t) state[id][code] = r;
+  }
+}
+function pushAll() {
+  if (!db || !me) return;
+  for (const [code, e] of Object.entries(state[me])) db.ref(`${CFG.room}/${me}/${code}`).set(e).catch(() => {});
+}
+function persist() { save("plate.state", state); }
+
+// ---- actions ----
+function toggle(code) {
+  const cur = state[me][code];
+  state[me][code] = (cur && !cur.d) ? { t: Date.now(), d: 1 } : { t: Date.now(), ...(cur?.img ? { img: cur.img } : {}) };
+  commit(code);
+}
+function commit(code) {
+  persist(); render();
+  if (db) db.ref(`${CFG.room}/${me}/${code}`).set(state[me][code]).catch(() => {});
+}
+let photoFor = null;
+$("#file").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f || !photoFor) return;
+  const img = await createImageBitmap(f);
+  const w = 360, h = Math.round(img.height * w / img.width);
+  const c = Object.assign(document.createElement("canvas"), { width: w, height: h });
+  c.getContext("2d").drawImage(img, 0, 0, w, h);
+  state[me][photoFor] = { t: Date.now(), img: c.toDataURL("image/jpeg", 0.6) };
+  commit(photoFor); photoFor = null;
+});
+
+const found = (id, code) => { const e = state[id][code]; return e && !e.d ? e : null; };
+const count = id => ALL.filter(c => found(id, c)).length;
+
+// ---- render ----
+function render() {
+  if (!me) return;
+  $("#score").innerHTML = IDS.map(id => `<div class="team ${id===me?"me":""}" style="--c:${TEAMS[id].color}">
+    <div class="n"><span>${TEAMS[id].name}</span></div><div class="v">${count(id)}<small> / ${ALL.length}</small></div></div>`).join("");
+  $("#boards").innerHTML = Object.entries(REGIONS).map(([title, items]) =>
+    `<h2>${title}</h2><div class="grid">` + Object.entries(items).map(([code, name]) => {
+      const mine = found(me, code);
+      const img = IDS.map(id => found(id, code)?.img).find(Boolean);
+      return `<div class="tile ${mine?"me-on":""} ${img?"has-img":""}" data-code="${code}" style="--mine:${TEAMS[me].color}">
+        ${img ? `<div class="bg" data-zoom style="background-image:url(${img})"></div>` : ""}
+        <div class="dots">${IDS.map(id => `<span class="dot ${found(id,code)?"on":""}" style="--c:${TEAMS[id].color}"></span>`).join("")}</div>
+        ${mine ? `<button class="cam" data-cam>📷</button>` : ""}
+        <div class="code">${code}</div><div class="nm">${name}</div></div>`;
+    }).join("") + `</div>`).join("");
+  renderStatus();
+}
+function renderStatus() {
+  const t = lastSync ? new Date(lastSync).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "never";
+  $("#net").textContent = !db ? "Local only (no Firebase configured)"
+    : online ? "● Live" : `○ Offline, edits saved. Last sync ${t}`;
+}
+
+$("#boards").addEventListener("click", e => {
+  const tile = e.target.closest(".tile"); if (!tile) return;
+  const code = tile.dataset.code;
+  if (e.target.closest("[data-cam]")) { photoFor = code; $("#file").click(); return; }
+  if (e.target.closest("[data-zoom]") && !e.target.closest(".dots")) {
+    const img = found(me, code)?.img || IDS.map(id => found(id, code)?.img).find(Boolean);
+    if (img && !found(me, code)) { $("#lb img").src = img; $("#lb").style.display = "flex"; return; }
+  }
+  toggle(code);
+});
+$("#lb").onclick = () => $("#lb").style.display = "none";
+
+function chooseCar() {
+  $("#whoBtns").innerHTML = IDS.map(id => `<button data-id="${id}" style="background:${TEAMS[id].color}">${TEAMS[id].name}</button>`).join("");
+  $("#who").style.display = "flex";
+}
+$("#whoBtns").addEventListener("click", e => {
+  const id = e.target.dataset.id; if (!id) return;
+  me = id; save("plate.me", me); $("#who").style.display = "none"; render(); pushAll();
+});
+$("#switch").onclick = chooseCar;
+
+if (!me) chooseCar(); else render();
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
