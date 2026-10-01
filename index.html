@@ -70,6 +70,7 @@
 </header>
 <div id="status"><span id="net"></span><button id="switch">switch car</button></div>
 <div id="boards"></div>
+<div style="text-align:center;margin:30px 12px 0"><button id="nuke" style="background:none;border:1px solid #b91c1c;color:#b91c1c;border-radius:8px;padding:8px 12px;font:inherit;font-size:13px">Dangerous: clear everything</button></div>
 <div id="mapview"></div>
 
 <div id="sheetbg"><div id="sheet"></div></div>
@@ -104,6 +105,7 @@ if (me && !TEAMS[me]) me = null;
 let state = load("plate.state", {}); IDS.forEach(i => state[i] ||= {});
 let names = load("plate.names", {}); // names[id] = {n, t}
 const tname = id => names[id]?.n || TEAMS[id].name;
+let resetAt = load("plate.resetAt", 0), resetChecked = false;
 let db = null, online = false, lastSync = load("plate.lastSync", null), tab = "plates";
 const mod = e => e.m || e.t;
 
@@ -112,6 +114,12 @@ if (CFG.firebase.databaseURL && window.firebase) {
   firebase.initializeApp(CFG.firebase);
   db = firebase.database();
   db.ref(".info/connected").on("value", s => { online = !!s.val(); if (online) pushAll(); renderStatus(); });
+  // A reset wipes the room and stamps resetAt; every phone then wipes its local copy before it can re-push.
+  db.ref(`${CFG.room}/resetAt`).on("value", snap => {
+    const r = snap.val() || 0;
+    if (r > resetAt) { resetAt = r; save("plate.resetAt", r); wipeLocal(); render(); }
+    resetChecked = true; pushAll();
+  });
   db.ref(`${CFG.room}/names`).on("value", snap => {
     const r = snap.val() || {};
     for (const [id, v] of Object.entries(r)) if (TEAMS[id] && (!names[id] || v.t > names[id].t)) names[id] = v;
@@ -130,7 +138,7 @@ if (CFG.firebase.databaseURL && window.firebase) {
   }));
 }
 function pushAll() {
-  if (!db || !me) return;
+  if (!db || !me || !resetChecked) return;
   for (const [code, e] of Object.entries(state[me])) db.ref(`${CFG.room}/${me}/${code}`).set(e).catch(() => {});
 }
 function persist() { save("plate.state", state); }
@@ -157,6 +165,21 @@ function locate(code, t) {
 }
 function setBy(code, by) { state[me][code] = { ...state[me][code], by, m: Date.now() }; commit(code); }
 function remove(code) { const now = Date.now(); state[me][code] = { t: now, m: now, d: 1 }; commit(code); }
+
+function wipeLocal() {
+  IDS.forEach(i => state[i] = {}); names = {};
+  persist(); save("plate.names", names);
+}
+$("#nuke").onclick = async () => {
+  if (prompt("This deletes ALL plates and car names for both cars. Type the password:") !== "cleareverything") return;
+  resetAt = Date.now(); save("plate.resetAt", resetAt);
+  wipeLocal();
+  if (db) {
+    try { await db.ref(CFG.room).set({ resetAt }); }
+    catch { alert("Couldn't reach the server. Cleared on this phone only; try again with service."); }
+  }
+  closeSheet(); render();
+};
 
 const found = (id, code) => { const e = state[id][code]; return e && !e.d ? e : null; };
 const count = (id, list = ALL) => list.filter(c => found(id, c)).length;
