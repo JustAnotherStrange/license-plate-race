@@ -1,0 +1,9 @@
+- who within the car did it (when you check off a state, you can select who saw it, and then a tracker). Names can be hardcoded for now. Names for Car A: Bennett, Owen, Joelie. Names for Car B: Lily, Jax, Becca
+- timestamp / other metadata about when it was spotted
+- take a gps fix and log the coords/location that it happened at
+- shows the total between both teams (total unique ones spotted)
+- add a map tab or map at the bottom showing the geographic places (red/blue/purple or whatever)
+- add a country for # of US states seen, and # of canadian provinces seen (DC is just outside of that)
+- take away / comment off the photo feature, most cars speed by so this is kind of impractical.
+- change the design of the top counters red/blue accent things, instead making it a bit less of a purely vibecoded design, maybe with the whole box accented that color, or something along those lines.
+- 

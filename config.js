@@ -4,6 +4,10 @@ window.GAME_CONFIG = {
     a: { name: "Car A", color: "#2563eb" },
     b: { name: "Car B", color: "#e11d48" },
   },
+  people: {
+    a: ["Bennett", "Owen", "Joelie"],
+    b: ["Lily", "Jax", "Becca"],
+  },
   // Paste your Firebase web config here. Leave databaseURL empty to run local-only.
   firebase: {
     apiKey: "AIzaSyBNhtMQW_IukJTjbG1etzuj75YKA0KX0pY",

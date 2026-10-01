@@ -8,53 +8,78 @@
 <title>License Plate Race</title>
 <link rel="manifest" href="manifest.json">
 <style>
-  :root { color-scheme:light; --bg:#f3f4f6; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb; }
+  :root { color-scheme:light; --bg:#f3f4f6; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb; --both:#7c3aed; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body { margin:0; background:var(--bg); color:var(--text); font:16px/1.3 system-ui,-apple-system,sans-serif; padding-bottom:40px; }
-  header { position:sticky; top:0; z-index:5; background:var(--bg); padding:10px 12px 8px; border-bottom:1px solid var(--line); }
+  header { position:sticky; top:0; z-index:5; background:var(--bg); padding:10px 12px 0; border-bottom:1px solid var(--line); }
   .score { display:flex; gap:8px; }
-  .team { flex:1; background:var(--card); border-radius:12px; padding:8px 12px; border-top:4px solid var(--c); }
-  .team .n { font-size:13px; color:var(--muted); display:flex; justify-content:space-between; }
-  .team .v { font-size:30px; font-weight:700; }
-  .team .v small { font-size:14px; color:var(--muted); font-weight:400; }
-  .team.me { cursor:pointer; }
-  .team.me .n::after { content:"you ✎"; color:var(--c); font-weight:600; }
-  .team .n span:first-child { order:0; }
-  #status { font-size:12px; color:var(--muted); margin-top:6px; display:flex; justify-content:space-between; }
+  .team { flex:1; background:var(--c); color:#fff; border-radius:10px; padding:10px 12px; min-width:0; }
+  .team.me { cursor:pointer; box-shadow:0 0 0 2px var(--bg), 0 0 0 4px var(--c); }
+  .team .n { font-size:13px; font-weight:600; display:flex; justify-content:space-between; gap:6px; opacity:.95; }
+  .team .n span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .team.me .n::after { content:"you ✎"; font-weight:500; opacity:.8; white-space:nowrap; }
+  .team .v { font-size:32px; font-weight:700; line-height:1.1; }
+  .team .v small { font-size:14px; font-weight:400; opacity:.8; }
+  .team .sub { font-size:12px; opacity:.9; margin-top:2px; }
+  .team .who { font-size:11px; opacity:.85; margin-top:4px; padding-top:4px; border-top:1px solid rgba(255,255,255,.3); }
+  .total { margin:8px 0 0; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:7px 12px; font-size:13px; display:flex; flex-wrap:wrap; gap:2px 14px; }
+  .total b { font-size:15px; }
+  .total .muted { color:var(--muted); }
+  .tabs { display:flex; margin-top:8px; }
+  .tabs button { flex:1; background:none; border:0; border-bottom:3px solid transparent; padding:9px; font:inherit; font-weight:600; color:var(--muted); }
+  .tabs button.on { color:var(--text); border-bottom-color:var(--text); }
+  #status { font-size:12px; color:var(--muted); padding:6px 12px; display:flex; justify-content:space-between; }
   #status button { background:none; border:0; color:var(--muted); text-decoration:underline; font:inherit; padding:0; }
   h2 { margin:18px 12px 8px; font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
   .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:8px; padding:0 12px; }
-  .tile { position:relative; background:var(--card); border:1px solid var(--line); border-radius:12px; min-height:84px; padding:8px; overflow:hidden; cursor:pointer; user-select:none; display:flex; flex-direction:column; justify-content:flex-end; }
-  .tile .code { font-weight:700; font-size:20px; position:relative; }
-  .tile .nm { font-size:11px; color:var(--muted); position:relative; }
-  .tile.has-img { color:#fff; }
-  .tile.has-img .nm { color:#e5e7eb; }
-  .tile .bg { position:absolute; inset:0; background-size:cover; background-position:center; }
-  .tile .bg::after { content:""; position:absolute; inset:0; background:linear-gradient(transparent 30%, rgba(0,0,0,.75)); }
-  .dots { position:absolute; top:6px; left:6px; display:flex; gap:4px; z-index:1; }
+  .tile { position:relative; background:var(--card); border:1px solid var(--line); border-radius:10px; min-height:84px; padding:8px; cursor:pointer; user-select:none; display:flex; flex-direction:column; justify-content:flex-end; }
+  .tile .code { font-weight:700; font-size:20px; }
+  .tile .nm { font-size:11px; color:var(--muted); }
+  .tile.me-on { box-shadow:inset 0 0 0 2px var(--mine); }
+  .dots { position:absolute; top:6px; left:6px; display:flex; gap:4px; }
   .dot { width:14px; height:14px; border-radius:50%; border:2px solid var(--line); background:transparent; }
   .dot.on { background:var(--c); border-color:var(--c); }
-  .tile.me-on { box-shadow:inset 0 0 0 2px var(--mine); }
-  .cam { position:absolute; top:3px; right:3px; z-index:2; background:rgba(0,0,0,.45); color:#fff; border:0; border-radius:8px; width:30px; height:30px; font-size:15px; }
-  #who { position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:20; }
+  .by { position:absolute; top:5px; right:7px; font-size:11px; color:var(--muted); }
+  #mapview { display:none; padding:12px; }
+  #mapview svg { width:100%; height:auto; display:block; background:var(--card); border:1px solid var(--line); border-radius:10px; }
+  #mapview path { stroke:#fff; stroke-width:1; stroke-linejoin:round; cursor:pointer; }
+  .legend { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; font-size:13px; }
+  .legend i { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:5px; vertical-align:-1px; }
+  #sheetbg { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; z-index:20; align-items:flex-end; justify-content:center; }
+  #sheet { background:var(--card); width:min(520px,100vw); border-radius:16px 16px 0 0; padding:16px 16px calc(18px + env(safe-area-inset-bottom)); max-height:85vh; overflow:auto; }
+  #sheet h3 { margin:0 0 10px; font-size:20px; }
+  #sheet .row { padding:8px 10px; border-left:4px solid var(--c); background:var(--bg); border-radius:6px; margin-bottom:6px; font-size:14px; }
+  #sheet .row .s { color:var(--muted); font-size:12px; }
+  #sheet .row a { color:inherit; }
+  #sheet .lbl { font-size:13px; color:var(--muted); margin:12px 0 6px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chips button { padding:12px 16px; font-size:16px; border-radius:999px; border:2px solid var(--c); background:#fff; color:var(--c); font-weight:600; }
+  .chips button.on { background:var(--c); color:#fff; }
+  .chips button.danger { --c:#b91c1c; }
+  .chips button.cancel { --c:#6b7280; }
+  #who { position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:40; }
   #who .box { background:var(--card); padding:22px; border-radius:16px; width:min(340px,90vw); text-align:center; }
   #who button { display:block; width:100%; margin-top:10px; padding:14px; font-size:18px; border:0; border-radius:12px; color:#fff; font-weight:600; }
-  #lb { position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; z-index:30; }
-  #lb img { max-width:95vw; max-height:85vh; border-radius:8px; }
 </style>
 </head>
 <body>
 <header>
   <div class="score" id="score"></div>
-  <div id="status"><span id="net"></span><button id="switch">switch car</button></div>
+  <div class="total" id="total"></div>
+  <div class="tabs"><button data-tab="plates" class="on">Plates</button><button data-tab="map">Map</button></div>
 </header>
+<div id="status"><span id="net"></span><button id="switch">switch car</button></div>
 <div id="boards"></div>
+<div id="mapview"></div>
 
+<div id="sheetbg"><div id="sheet"></div></div>
 <div id="who"><div class="box"><div style="font-size:18px;font-weight:600">Which car are you in?</div><div id="whoBtns"></div></div></div>
-<div id="lb"><img alt=""></div>
+<!-- Photo feature disabled (impractical at speed). To restore, see git history.
 <input type="file" accept="image/*" capture="environment" id="file" hidden>
+-->
 
 <script src="config.js"></script>
+<script src="map.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
@@ -65,18 +90,22 @@ const REGIONS = {
   "Canada": { AB:"Alberta",BC:"British Columbia",MB:"Manitoba",NB:"New Brunswick",NL:"Newfoundland & Labrador",NS:"Nova Scotia",ON:"Ontario",PE:"Prince Edward Island",QC:"Quebec",SK:"Saskatchewan",NT:"Northwest Territories",NU:"Nunavut",YT:"Yukon" },
 };
 const ALL = Object.values(REGIONS).flatMap(r => Object.keys(r));
-const TEAMS = CFG.teams, IDS = Object.keys(TEAMS);
-const esc = t => t.replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+const US = Object.keys(REGIONS["US States"]), CA = Object.keys(REGIONS["Canada"]);
+const NAME = Object.assign({}, ...Object.values(REGIONS));
+const TEAMS = CFG.teams, IDS = Object.keys(TEAMS), PEOPLE = CFG.people || {};
+const esc = t => String(t).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 const $ = s => document.querySelector(s);
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 
 let me = load("plate.me", null);
-// state[teamId][code] = {t: ms, d?: 1 (removed), img?: dataURL}
+if (me && !TEAMS[me]) me = null;
+// state[teamId][code] = {t: spotted ms, m: last-modified ms, by, lat, lon, d?: 1 (removed)}
 let state = load("plate.state", {}); IDS.forEach(i => state[i] ||= {});
 let names = load("plate.names", {}); // names[id] = {n, t}
 const tname = id => names[id]?.n || TEAMS[id].name;
-let db = null, online = false, lastSync = load("plate.lastSync", null);
+let db = null, online = false, lastSync = load("plate.lastSync", null), tab = "plates";
+const mod = e => e.m || e.t;
 
 // ---- Firebase (optional) ----
 if (CFG.firebase.databaseURL && window.firebase) {
@@ -91,66 +120,84 @@ if (CFG.firebase.databaseURL && window.firebase) {
   });
   IDS.forEach(id => db.ref(`${CFG.room}/${id}`).on("value", snap => {
     const remote = snap.val() || {};
-    mergeInto(id, remote);
+    for (const [code, r] of Object.entries(remote)) {
+      const l = state[id][code];
+      if (!l || mod(r) > mod(l)) state[id][code] = r;
+    }
     lastSync = Date.now(); save("plate.lastSync", lastSync);
     persist(); render();
     if (id === me) pushAll();
   }));
-}
-
-function mergeInto(id, remote) {
-  for (const [code, r] of Object.entries(remote)) {
-    const l = state[id][code];
-    if (!l || r.t > l.t) state[id][code] = r;
-  }
 }
 function pushAll() {
   if (!db || !me) return;
   for (const [code, e] of Object.entries(state[me])) db.ref(`${CFG.room}/${me}/${code}`).set(e).catch(() => {});
 }
 function persist() { save("plate.state", state); }
-
-// ---- actions ----
-function toggle(code) {
-  const cur = state[me][code];
-  state[me][code] = (cur && !cur.d) ? { t: Date.now(), d: 1 } : { t: Date.now(), ...(cur?.img ? { img: cur.img } : {}) };
-  commit(code);
-}
 function commit(code) {
   persist(); render();
   if (db) db.ref(`${CFG.room}/${me}/${code}`).set(state[me][code]).catch(() => {});
 }
-let photoFor = null;
-$("#file").addEventListener("change", async e => {
-  const f = e.target.files[0]; e.target.value = "";
-  if (!f || !photoFor) return;
-  const img = await createImageBitmap(f);
-  const w = 360, h = Math.round(img.height * w / img.width);
-  const c = Object.assign(document.createElement("canvas"), { width: w, height: h });
-  c.getContext("2d").drawImage(img, 0, 0, w, h);
-  state[me][photoFor] = { t: Date.now(), img: c.toDataURL("image/jpeg", 0.6) };
-  commit(photoFor); photoFor = null;
-});
+
+// ---- actions ----
+function markFound(code, by) {
+  const now = Date.now();
+  state[me][code] = { t: now, m: now, by };
+  commit(code); locate(code, now);
+}
+// GPS fix arrives after the plate is already saved, so a slow/denied fix never blocks it.
+function locate(code, t) {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(p => {
+    const e = state[me][code];
+    if (!e || e.d || e.t !== t) return;
+    state[me][code] = { ...e, lat: +p.coords.latitude.toFixed(5), lon: +p.coords.longitude.toFixed(5), m: Date.now() };
+    commit(code); if ($("#sheetbg").style.display === "flex") openSheet(code);
+  }, () => {}, { enableHighAccuracy: true, timeout: 20000, maximumAge: 30000 });
+}
+function setBy(code, by) { state[me][code] = { ...state[me][code], by, m: Date.now() }; commit(code); }
+function remove(code) { const now = Date.now(); state[me][code] = { t: now, m: now, d: 1 }; commit(code); }
 
 const found = (id, code) => { const e = state[id][code]; return e && !e.d ? e : null; };
-const count = id => ALL.filter(c => found(id, c)).length;
+const count = (id, list = ALL) => list.filter(c => found(id, c)).length;
+const countAny = list => list.filter(c => IDS.some(id => found(id, c))).length;
 
 // ---- render ----
 function render() {
   if (!me) return;
-  $("#score").innerHTML = IDS.map(id => `<div class="team ${id===me?"me":""}" style="--c:${TEAMS[id].color}">
-    <div class="n"><span>${esc(tname(id))}</span></div><div class="v">${count(id)}<small> / ${ALL.length}</small></div></div>`).join("");
+  $("#score").innerHTML = IDS.map(id => {
+    const per = (PEOPLE[id] || []).map(p => `${esc(p)} ${ALL.filter(c => found(id, c)?.by === p).length}`).join(" · ");
+    return `<div class="team ${id===me?"me":""}" data-team="${id}" style="--c:${TEAMS[id].color}">
+      <div class="n"><span>${esc(tname(id))}</span></div>
+      <div class="v">${count(id)}<small> / ${ALL.length}</small></div>
+      <div class="sub">US ${count(id,US)}/${US.length} · CA ${count(id,CA)}/${CA.length}${found(id,"DC")?" · DC ✓":""}</div>
+      ${per ? `<div class="who">${per}</div>` : ""}</div>`;
+  }).join("");
+  const both = ALL.filter(c => IDS.every(id => found(id, c))).length;
+  $("#total").innerHTML = `<span><b>${countAny(ALL)}</b> / ${ALL.length} unique together</span>
+    <span class="muted">US ${countAny(US)}/${US.length} · CA ${countAny(CA)}/${CA.length}${IDS.some(id=>found(id,"DC"))?" · DC ✓":""} · ${both} in both</span>`;
+  renderPlates(); renderMap(); renderStatus();
+}
+function renderPlates() {
   $("#boards").innerHTML = Object.entries(REGIONS).map(([title, items]) =>
     `<h2>${title}</h2><div class="grid">` + Object.entries(items).map(([code, name]) => {
       const mine = found(me, code);
-      const img = IDS.map(id => found(id, code)?.img).find(Boolean);
-      return `<div class="tile ${mine?"me-on":""} ${img?"has-img":""}" data-code="${code}" style="--mine:${TEAMS[me].color}">
-        ${img ? `<div class="bg" data-zoom style="background-image:url(${img})"></div>` : ""}
+      return `<div class="tile ${mine?"me-on":""}" data-code="${code}" style="--mine:${TEAMS[me].color}">
         <div class="dots">${IDS.map(id => `<span class="dot ${found(id,code)?"on":""}" style="--c:${TEAMS[id].color}"></span>`).join("")}</div>
-        ${mine ? `<button class="cam" data-cam>📷</button>` : ""}
+        ${mine?.by ? `<span class="by">${esc(mine.by)}</span>` : ""}
         <div class="code">${code}</div><div class="nm">${name}</div></div>`;
     }).join("") + `</div>`).join("");
-  renderStatus();
+}
+function fillFor(code) {
+  const f = IDS.filter(id => found(id, code));
+  return f.length === 2 ? "var(--both)" : f.length ? TEAMS[f[0]].color : "#e5e7eb";
+}
+function renderMap() {
+  const M = window.MAP; if (!M) return;
+  $("#mapview").innerHTML = `<svg viewBox="0 0 ${M.w} ${M.h}">` +
+    Object.entries(M.paths).map(([c, d]) => `<path data-code="${c}" d="${d}" fill="${fillFor(c)}"/>`).join("") + `</svg>
+    <div class="legend">${IDS.map(id => `<span><i style="background:${TEAMS[id].color}"></i>${esc(tname(id))} only</span>`).join("")}
+    <span><i style="background:var(--both)"></i>Both</span><span><i style="background:#e5e7eb"></i>Not yet</span></div>`;
 }
 function renderStatus() {
   const t = lastSync ? new Date(lastSync).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "never";
@@ -158,16 +205,43 @@ function renderStatus() {
     : online ? "● Live" : `○ Offline, edits saved. Last sync ${t}`;
 }
 
-$("#boards").addEventListener("click", e => {
-  const tile = e.target.closest(".tile"); if (!tile) return;
-  const code = tile.dataset.code;
-  if (e.target.closest("[data-cam]")) { photoFor = code; $("#file").click(); return; }
-  if (e.target.closest("[data-zoom]") && !e.target.closest(".dots")) {
-    const img = found(me, code)?.img || IDS.map(id => found(id, code)?.img).find(Boolean);
-    if (img && !found(me, code)) { $("#lb img").src = img; $("#lb").style.display = "flex"; return; }
-  }
-  toggle(code);
+// ---- detail / who-saw-it sheet ----
+const fmt = t => new Date(t).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+function openSheet(code) {
+  const mine = found(me, code), people = PEOPLE[me] || [];
+  const rows = IDS.map(id => {
+    const e = found(id, code);
+    const loc = e?.lat != null ? ` · <a href="https://maps.google.com/?q=${e.lat},${e.lon}" target="_blank" rel="noopener">${e.lat.toFixed(3)}, ${e.lon.toFixed(3)} ↗</a>` : (e ? ` · <span class="s">no GPS fix</span>` : "");
+    return `<div class="row" style="--c:${TEAMS[id].color}"><b>${esc(tname(id))}</b>: ${e ? `${e.by ? esc(e.by) + " · " : ""}${fmt(e.t)}${loc}` : `<span class="s">not spotted</span>`}</div>`;
+  }).join("");
+  const chips = people.map(p => `<button data-by="${esc(p)}" class="${mine?.by === p ? "on" : ""}">${esc(p)}</button>`).join("");
+  $("#sheet").style.setProperty("--c", TEAMS[me].color);
+  $("#sheet").innerHTML = `<h3>${NAME[code]} (${code})</h3>${rows}
+    <div class="lbl">${mine ? "Change who saw it" : "Who saw it?"}</div>
+    <div class="chips" data-code="${code}">${chips}${mine ? `<button class="danger" data-remove>Remove</button>` : ""}<button class="cancel" data-close>${mine ? "Done" : "Cancel"}</button></div>`;
+  $("#sheetbg").style.display = "flex";
+}
+const closeSheet = () => $("#sheetbg").style.display = "none";
+$("#sheetbg").addEventListener("click", e => {
+  if (e.target.id === "sheetbg" || e.target.closest("[data-close]")) return closeSheet();
+  const chips = e.target.closest(".chips"); if (!chips) return;
+  const code = chips.dataset.code, b = e.target.closest("button"); if (!b) return;
+  if (b.hasAttribute("data-remove")) { remove(code); return closeSheet(); }
+  const by = b.dataset.by;
+  if (found(me, code)) { setBy(code, by); openSheet(code); } else { markFound(code, by); closeSheet(); }
 });
+const onCode = e => { const el = e.target.closest("[data-code]"); if (el && me) openSheet(el.dataset.code); };
+$("#boards").addEventListener("click", onCode);
+$("#mapview").addEventListener("click", onCode);
+
+$(".tabs").addEventListener("click", e => {
+  const t = e.target.dataset.tab; if (!t) return;
+  tab = t;
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === t));
+  $("#boards").style.display = t === "plates" ? "" : "none";
+  $("#mapview").style.display = t === "map" ? "block" : "none";
+});
+
 $("#score").addEventListener("click", e => {
   if (!e.target.closest(".team.me")) return;
   const n = prompt("Rename your car:", tname(me));
@@ -176,7 +250,6 @@ $("#score").addEventListener("click", e => {
   save("plate.names", names); render();
   if (db) db.ref(`${CFG.room}/names/${me}`).set(names[me]).catch(() => {});
 });
-$("#lb").onclick = () => $("#lb").style.display = "none";
 
 function chooseCar() {
   $("#whoBtns").innerHTML = IDS.map(id => `<button data-id="${id}" style="background:${TEAMS[id].color}">${esc(tname(id))}</button>`).join("");
@@ -187,6 +260,20 @@ $("#whoBtns").addEventListener("click", e => {
   me = id; save("plate.me", me); $("#who").style.display = "none"; render(); pushAll();
 });
 $("#switch").onclick = chooseCar;
+
+/* Photo feature disabled: most cars pass too fast for photos to be practical.
+let photoFor = null;
+$("#file").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f || !photoFor) return;
+  const img = await createImageBitmap(f);
+  const w = 360, h = Math.round(img.height * w / img.width);
+  const c = Object.assign(document.createElement("canvas"), { width: w, height: h });
+  c.getContext("2d").drawImage(img, 0, 0, w, h);
+  state[me][photoFor] = { ...state[me][photoFor], img: c.toDataURL("image/jpeg", 0.6), m: Date.now() };
+  commit(photoFor); photoFor = null;
+});
+*/
 
 if (!me) chooseCar(); else render();
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});

@@ -1,6 +1,6 @@
 // Cache the app shell + Firebase SDK so the page opens with no cell service.
-const CACHE = "plates-v1";
-const SHELL = ["./", "index.html", "config.js", "manifest.json",
+const CACHE = "plates-v2";
+const SHELL = ["./", "index.html", "config.js", "map.js", "manifest.json",
   "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",
   "https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"];
 
