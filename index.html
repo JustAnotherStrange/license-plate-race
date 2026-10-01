@@ -78,8 +78,8 @@
 <input type="file" accept="image/*" capture="environment" id="file" hidden>
 -->
 
-<script src="config.js"></script>
-<script src="map.js"></script>
+<script src="config.js?v=3"></script>
+<script src="map.js?v=3"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
@@ -92,7 +92,7 @@ const REGIONS = {
 const ALL = Object.values(REGIONS).flatMap(r => Object.keys(r));
 const US = Object.keys(REGIONS["US States"]), CA = Object.keys(REGIONS["Canada"]);
 const NAME = Object.assign({}, ...Object.values(REGIONS));
-const TEAMS = CFG.teams, IDS = Object.keys(TEAMS), PEOPLE = CFG.people || {};
+const TEAMS = CFG.teams, IDS = Object.keys(TEAMS), PEOPLE = CFG.people || { a: ["Bennett", "Owen", "Joelie"], b: ["Lily", "Jax", "Becca"] };
 const esc = t => String(t).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 const $ = s => document.querySelector(s);
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
