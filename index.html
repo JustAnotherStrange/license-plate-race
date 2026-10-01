@@ -3,14 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#111827">
+<meta name="theme-color" content="#f3f4f6">
+<meta name="color-scheme" content="light">
 <title>License Plate Race</title>
 <link rel="manifest" href="manifest.json">
 <style>
-  :root { --bg:#f3f4f6; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#0b0f17; --card:#161c28; --text:#f3f4f6; --muted:#9ca3af; --line:#263042; }
-  }
+  :root { color-scheme:light; --bg:#f3f4f6; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body { margin:0; background:var(--bg); color:var(--text); font:16px/1.3 system-ui,-apple-system,sans-serif; padding-bottom:40px; }
   header { position:sticky; top:0; z-index:5; background:var(--bg); padding:10px 12px 8px; border-bottom:1px solid var(--line); }
@@ -19,7 +17,8 @@
   .team .n { font-size:13px; color:var(--muted); display:flex; justify-content:space-between; }
   .team .v { font-size:30px; font-weight:700; }
   .team .v small { font-size:14px; color:var(--muted); font-weight:400; }
-  .team.me .n::after { content:"you"; color:var(--c); font-weight:600; }
+  .team.me { cursor:pointer; }
+  .team.me .n::after { content:"you ✎"; color:var(--c); font-weight:600; }
   .team .n span:first-child { order:0; }
   #status { font-size:12px; color:var(--muted); margin-top:6px; display:flex; justify-content:space-between; }
   #status button { background:none; border:0; color:var(--muted); text-decoration:underline; font:inherit; padding:0; }
@@ -67,6 +66,7 @@ const REGIONS = {
 };
 const ALL = Object.values(REGIONS).flatMap(r => Object.keys(r));
 const TEAMS = CFG.teams, IDS = Object.keys(TEAMS);
+const esc = t => t.replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 const $ = s => document.querySelector(s);
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -74,6 +74,8 @@ const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } cat
 let me = load("plate.me", null);
 // state[teamId][code] = {t: ms, d?: 1 (removed), img?: dataURL}
 let state = load("plate.state", {}); IDS.forEach(i => state[i] ||= {});
+let names = load("plate.names", {}); // names[id] = {n, t}
+const tname = id => names[id]?.n || TEAMS[id].name;
 let db = null, online = false, lastSync = load("plate.lastSync", null);
 
 // ---- Firebase (optional) ----
@@ -81,6 +83,12 @@ if (CFG.firebase.databaseURL && window.firebase) {
   firebase.initializeApp(CFG.firebase);
   db = firebase.database();
   db.ref(".info/connected").on("value", s => { online = !!s.val(); if (online) pushAll(); renderStatus(); });
+  db.ref(`${CFG.room}/names`).on("value", snap => {
+    const r = snap.val() || {};
+    for (const [id, v] of Object.entries(r)) if (TEAMS[id] && (!names[id] || v.t > names[id].t)) names[id] = v;
+    save("plate.names", names); render();
+    for (const [id, v] of Object.entries(names)) if (!r[id] || v.t > r[id].t) db.ref(`${CFG.room}/names/${id}`).set(v).catch(() => {});
+  });
   IDS.forEach(id => db.ref(`${CFG.room}/${id}`).on("value", snap => {
     const remote = snap.val() || {};
     mergeInto(id, remote);
@@ -131,7 +139,7 @@ const count = id => ALL.filter(c => found(id, c)).length;
 function render() {
   if (!me) return;
   $("#score").innerHTML = IDS.map(id => `<div class="team ${id===me?"me":""}" style="--c:${TEAMS[id].color}">
-    <div class="n"><span>${TEAMS[id].name}</span></div><div class="v">${count(id)}<small> / ${ALL.length}</small></div></div>`).join("");
+    <div class="n"><span>${esc(tname(id))}</span></div><div class="v">${count(id)}<small> / ${ALL.length}</small></div></div>`).join("");
   $("#boards").innerHTML = Object.entries(REGIONS).map(([title, items]) =>
     `<h2>${title}</h2><div class="grid">` + Object.entries(items).map(([code, name]) => {
       const mine = found(me, code);
@@ -160,10 +168,18 @@ $("#boards").addEventListener("click", e => {
   }
   toggle(code);
 });
+$("#score").addEventListener("click", e => {
+  if (!e.target.closest(".team.me")) return;
+  const n = prompt("Rename your car:", tname(me));
+  if (n === null || !n.trim()) return;
+  names[me] = { n: n.trim().slice(0, 24), t: Date.now() };
+  save("plate.names", names); render();
+  if (db) db.ref(`${CFG.room}/names/${me}`).set(names[me]).catch(() => {});
+});
 $("#lb").onclick = () => $("#lb").style.display = "none";
 
 function chooseCar() {
-  $("#whoBtns").innerHTML = IDS.map(id => `<button data-id="${id}" style="background:${TEAMS[id].color}">${TEAMS[id].name}</button>`).join("");
+  $("#whoBtns").innerHTML = IDS.map(id => `<button data-id="${id}" style="background:${TEAMS[id].color}">${esc(tname(id))}</button>`).join("");
   $("#who").style.display = "flex";
 }
 $("#whoBtns").addEventListener("click", e => {
