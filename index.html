@@ -18,25 +18,41 @@
   body { margin:0; color:var(--ink); font:16px/1.3 var(--body); padding-bottom:40px; background-color:var(--paper);
     background-image:linear-gradient(rgba(120,95,40,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(120,95,40,.07) 1px,transparent 1px);
     background-size:28px 28px; }
-  header { position:sticky; top:0; z-index:5; background:var(--green); padding:max(8px,env(safe-area-inset-top)) 12px 0; border-bottom:4px solid var(--yellow); box-shadow:0 3px 0 var(--green2); }
+  .top { background:var(--green); padding:max(8px,env(safe-area-inset-top)) 12px 0; }
   .brand { font:15px/1 var(--display); color:#fff; letter-spacing:.04em; text-align:center; padding:2px 0 8px; display:flex; align-items:center; justify-content:center; gap:8px; }
   .brand::before, .brand::after { content:""; flex:1; height:0; border-top:3px dashed var(--yellow); opacity:.9; }
+  header { position:sticky; top:0; z-index:5; background:var(--green); padding:2px 12px 0; border-bottom:4px solid var(--yellow); box-shadow:0 3px 0 var(--green2); }
   .score { display:flex; gap:8px; }
-  .team { flex:1; min-width:0; color:var(--c); background:var(--card); border:3px solid var(--c); border-radius:12px; padding:2px; position:relative; }
-  .team > * { position:relative; }
-  .team::before { content:""; position:absolute; inset:3px; border:1.5px solid var(--c); border-radius:8px; opacity:.45; pointer-events:none; }
+  .team { flex:1; min-width:0; color:var(--c); background:var(--card); border:3px solid var(--c); border-radius:12px; padding:5px 9px 8px; }
   .team.me { cursor:pointer; box-shadow:0 0 0 2px var(--green), 0 0 0 5px var(--yellow); }
-  .team .n { font-size:12px; font-weight:600; display:flex; justify-content:space-between; gap:6px; text-transform:uppercase; letter-spacing:.06em; padding:5px 8px 0; }
-  .team .n span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .team.me .n::after { content:"you ✎"; font-weight:500; opacity:.75; white-space:nowrap; text-transform:none; letter-spacing:0; }
-  .team .v { font:30px/1.1 var(--display); padding:0 8px; }
-  .team .v small { font:500 14px var(--body); opacity:.7; }
-  .team .sub { font-size:12px; font-weight:500; padding:0 8px; color:var(--ink); opacity:.8; }
-  .team .who { font-size:11px; margin:4px 8px 5px; padding-top:4px; border-top:1.5px dashed var(--c); color:var(--ink); opacity:.75; }
-  .team .sub:last-child { padding-bottom:6px; }
-  .total { margin:8px 0 0; background:var(--yellow); color:#2a2200; border:2px solid #2a2200; border-radius:10px; padding:6px 12px; font-size:13px; display:flex; flex-wrap:wrap; gap:2px 14px; }
-  .total b { font:16px var(--display); }
-  .total .muted { color:#4d3f00; }
+  .team .n { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .team.me .n::after { content:" ✎"; opacity:.6; }
+  .team .v { font:34px/1.05 var(--display); display:flex; align-items:baseline; gap:4px; }
+  .team .v small { font:500 14px var(--body); opacity:.65; }
+  .bar { height:8px; border-radius:99px; background:rgba(42,39,51,.12); overflow:hidden; }
+  .bar i { display:block; height:100%; border-radius:99px; background:var(--c); }
+  .team .bar { margin-top:5px; }
+  .total { margin:8px 0 0; background:var(--yellow); color:#2a2200; border:2px solid #2a2200; border-radius:99px; padding:3px 12px; font-size:13px; font-weight:500; text-align:center; }
+  .total b { font:15px var(--display); }
+  #statsbtn { display:flex; align-items:center; justify-content:center; gap:8px; width:calc(100% - 24px); margin:12px 12px 0; min-height:44px; background:var(--card); border:2px solid var(--ink); border-radius:12px; box-shadow:0 3px 0 var(--ink); font:600 15px var(--body); color:var(--ink); }
+  #statsbtn:active { transform:translateY(3px); box-shadow:none; }
+  #statsbtn .chev { font-size:13px; transition:transform .25s; }
+  #statswrap.open #statsbtn .chev { transform:rotate(180deg); }
+  .sbody { display:grid; grid-template-rows:0fr; transition:grid-template-rows .25s ease; }
+  #statswrap.open .sbody { grid-template-rows:1fr; }
+  #stats { min-height:0; overflow:hidden; visibility:hidden; transition:visibility .25s; }
+  #statswrap.open #stats { visibility:visible; }
+  .sgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:12px 12px 0; }
+  @media (prefers-reduced-motion:reduce) { .sbody, #statsbtn .chev, #stats { transition:none; } }
+  .scol { background:var(--card); border:2px solid var(--ink); border-top:6px solid var(--c); border-radius:10px; padding:8px 10px 10px; min-width:0; }
+  .scol h4 { margin:0 0 6px; font:13px var(--display); color:var(--c); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .srow { font-size:13px; font-weight:500; margin-top:6px; }
+  .srow > div:first-child { display:flex; justify-content:space-between; }
+  .srow .bar { height:6px; margin-top:3px; }
+  .ppl { display:flex; flex-wrap:wrap; gap:4px; margin-top:9px; }
+  .ppl span { font-size:12px; font-weight:500; background:var(--paper); border-radius:99px; padding:2px 8px; }
+  .ppl b { color:var(--c); }
+  .sboth { grid-column:1/-1; text-align:center; font-size:13px; font-weight:500; color:var(--muted); }
   .tabs { display:flex; gap:6px; margin-top:10px; }
   .tabs button { flex:1; background:var(--green2); border:0; border-radius:12px 12px 0 0; padding:9px; font:600 16px var(--body); color:#bfe3cf; }
   .tabs button.on { background:var(--paper); color:var(--green); box-shadow:0 4px 0 var(--paper); position:relative; top:4px; padding-bottom:13px; }
@@ -88,12 +104,13 @@
 </style>
 </head>
 <body>
+<div class="top"><div class="brand">License Plate Race</div></div>
 <header>
-  <div class="brand">License Plate Race</div>
   <div class="score" id="score"></div>
   <div class="total" id="total"></div>
   <div class="tabs"><button data-tab="plates" class="on">🪪 Plates</button><button data-tab="map">🗺️ Map</button></div>
 </header>
+<div id="statswrap"><button id="statsbtn" aria-expanded="false" aria-controls="stats">📊 Full stats <span class="chev">▾</span></button><div class="sbody"><div id="stats"></div></div></div>
 <div id="status"><span id="net"></span><button id="switch">switch car</button></div>
 <div id="boards"></div>
 <div style="text-align:center;margin:30px 12px 0"><button id="nuke" style="background:none;border:1px solid #b91c1c;color:#b91c1c;border-radius:8px;padding:8px 12px;font:inherit;font-size:13px">Dangerous: clear everything</button></div>
@@ -214,17 +231,20 @@ const countAny = list => list.filter(c => IDS.some(id => found(id, c))).length;
 // ---- render ----
 function render() {
   if (!me) return;
-  $("#score").innerHTML = IDS.map(id => {
-    const per = (PEOPLE[id] || []).map(p => `${esc(p)} ${ALL.filter(c => found(id, c)?.by === p).length}`).join(" · ");
-    return `<div class="team ${id===me?"me":""}" data-team="${id}" style="--c:${TEAMS[id].color}">
-      <div class="n"><span>${esc(tname(id))}</span></div>
-      <div class="v">${count(id)}<small> / ${ALL.length}</small></div>
-      <div class="sub">US ${count(id,US)}/${US.length} · CA ${count(id,CA)}/${CA.length}${found(id,"DC")?" · DC ✓":""}</div>
-      ${per ? `<div class="who">${per}</div>` : ""}</div>`;
-  }).join("");
+  const bar = (n, t, c) => `<div class="bar" ${c ? `style="--c:${c}"` : ""}><i style="width:${(100 * n / t).toFixed(1)}%"></i></div>`;
+  $("#score").innerHTML = IDS.map(id => `<div class="team ${id===me?"me":""}" data-team="${id}" style="--c:${TEAMS[id].color}">
+      <div class="n">${esc(tname(id))}</div>
+      <div class="v">${count(id)}<small>/ ${ALL.length}</small></div>${bar(count(id), ALL.length)}</div>`).join("");
   const both = ALL.filter(c => IDS.every(id => found(id, c))).length;
-  $("#total").innerHTML = `<span><b>${countAny(ALL)}</b> / ${ALL.length} unique together</span>
-    <span class="muted">US ${countAny(US)}/${US.length} · CA ${countAny(CA)}/${CA.length}${IDS.some(id=>found(id,"DC"))?" · DC ✓":""} · ${both} in both</span>`;
+  $("#total").innerHTML = `🏁 <b>${countAny(ALL)}</b> / ${ALL.length} found together`;
+  $("#stats").innerHTML = `<div class="sgrid">` + IDS.map(id => {
+    const row = (l, n, t) => `<div class="srow"><div><span>${l}</span><b>${n}/${t}</b></div>${bar(n, t)}</div>`;
+    const ppl = (PEOPLE[id] || []).map(p => `<span>${esc(p)} <b>${ALL.filter(c => found(id, c)?.by === p).length}</b></span>`).join("");
+    return `<div class="scol" style="--c:${TEAMS[id].color}"><h4>${esc(tname(id))}</h4>
+      ${row("US states", count(id, US), US.length)}${row("Canada", count(id, CA), CA.length)}
+      <div class="srow"><div><span>Washington D.C.</span><b>${found(id,"DC") ? "✓" : "–"}</b></div></div>
+      ${ppl ? `<div class="ppl">${ppl}</div>` : ""}</div>`;
+  }).join("") + `<div class="sboth">${both} in both cars · US ${countAny(US)}/${US.length} · CA ${countAny(CA)}/${CA.length}${IDS.some(id=>found(id,"DC"))?" · DC ✓":""} together</div></div>`;
   renderPlates(); renderMap(); renderStatus();
 }
 function renderPlates() {
@@ -283,6 +303,11 @@ $("#sheetbg").addEventListener("click", e => {
 const onCode = e => { const el = e.target.closest("[data-code]"); if (el && me) openSheet(el.dataset.code); };
 $("#boards").addEventListener("click", onCode);
 $("#mapview").addEventListener("click", onCode);
+
+let statsOpen = load("plate.statsOpen", false);
+function setStats(o) { statsOpen = o; save("plate.statsOpen", o); $("#statswrap").classList.toggle("open", o); $("#statsbtn").setAttribute("aria-expanded", o); }
+$("#statsbtn").onclick = () => setStats(!statsOpen);
+setStats(statsOpen);
 
 $(".tabs").addEventListener("click", e => {
   const t = e.target.dataset.tab; if (!t) return;
