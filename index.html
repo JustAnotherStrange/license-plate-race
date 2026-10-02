@@ -3,70 +3,96 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f3f4f6">
+<meta name="theme-color" content="#0f5c3a">
 <meta name="color-scheme" content="light">
 <title>License Plate Race</title>
 <link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme:light; --bg:#f3f4f6; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb; --both:#7c3aed; }
+  :root { color-scheme:light; --paper:#f6edd6; --card:#fffaea; --ink:#2a2733; --muted:#7a6f5c; --line:#dccfae; --both:#7c3aed;
+    --green:#0f5c3a; --green2:#0b4a2e; --yellow:#ffc933; --land:#ecdfbb; --sea:#cfe5e8;
+    --display:"Bungee","Arial Black",system-ui,sans-serif; --body:"Fredoka",system-ui,-apple-system,sans-serif; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.3 system-ui,-apple-system,sans-serif; padding-bottom:40px; }
-  header { position:sticky; top:0; z-index:5; background:var(--bg); padding:10px 12px 0; border-bottom:1px solid var(--line); }
+  body { margin:0; color:var(--ink); font:16px/1.3 var(--body); padding-bottom:40px; background-color:var(--paper);
+    background-image:linear-gradient(rgba(120,95,40,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(120,95,40,.07) 1px,transparent 1px);
+    background-size:28px 28px; }
+  header { position:sticky; top:0; z-index:5; background:var(--green); padding:max(8px,env(safe-area-inset-top)) 12px 0; border-bottom:4px solid var(--yellow); box-shadow:0 3px 0 var(--green2); }
+  .brand { font:15px/1 var(--display); color:#fff; letter-spacing:.04em; text-align:center; padding:2px 0 8px; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .brand::before, .brand::after { content:""; flex:1; height:0; border-top:3px dashed var(--yellow); opacity:.9; }
   .score { display:flex; gap:8px; }
-  .team { flex:1; background:var(--c); color:#fff; border-radius:10px; padding:10px 12px; min-width:0; }
-  .team.me { cursor:pointer; box-shadow:0 0 0 2px var(--bg), 0 0 0 4px var(--c); }
-  .team .n { font-size:13px; font-weight:600; display:flex; justify-content:space-between; gap:6px; opacity:.95; }
+  .team { flex:1; min-width:0; color:var(--c); background:var(--card); border:3px solid var(--c); border-radius:12px; padding:2px; position:relative; }
+  .team > * { position:relative; }
+  .team::before { content:""; position:absolute; inset:3px; border:1.5px solid var(--c); border-radius:8px; opacity:.45; pointer-events:none; }
+  .team.me { cursor:pointer; box-shadow:0 0 0 2px var(--green), 0 0 0 5px var(--yellow); }
+  .team .n { font-size:12px; font-weight:600; display:flex; justify-content:space-between; gap:6px; text-transform:uppercase; letter-spacing:.06em; padding:5px 8px 0; }
   .team .n span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .team.me .n::after { content:"you ✎"; font-weight:500; opacity:.8; white-space:nowrap; }
-  .team .v { font-size:32px; font-weight:700; line-height:1.1; }
-  .team .v small { font-size:14px; font-weight:400; opacity:.8; }
-  .team .sub { font-size:12px; opacity:.9; margin-top:2px; }
-  .team .who { font-size:11px; opacity:.85; margin-top:4px; padding-top:4px; border-top:1px solid rgba(255,255,255,.3); }
-  .total { margin:8px 0 0; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:7px 12px; font-size:13px; display:flex; flex-wrap:wrap; gap:2px 14px; }
-  .total b { font-size:15px; }
-  .total .muted { color:var(--muted); }
-  .tabs { display:flex; margin-top:8px; }
-  .tabs button { flex:1; background:none; border:0; border-bottom:3px solid transparent; padding:9px; font:inherit; font-weight:600; color:var(--muted); }
-  .tabs button.on { color:var(--text); border-bottom-color:var(--text); }
-  #status { font-size:12px; color:var(--muted); padding:6px 12px; display:flex; justify-content:space-between; }
+  .team.me .n::after { content:"you ✎"; font-weight:500; opacity:.75; white-space:nowrap; text-transform:none; letter-spacing:0; }
+  .team .v { font:30px/1.1 var(--display); padding:0 8px; }
+  .team .v small { font:500 14px var(--body); opacity:.7; }
+  .team .sub { font-size:12px; font-weight:500; padding:0 8px; color:var(--ink); opacity:.8; }
+  .team .who { font-size:11px; margin:4px 8px 5px; padding-top:4px; border-top:1.5px dashed var(--c); color:var(--ink); opacity:.75; }
+  .team .sub:last-child { padding-bottom:6px; }
+  .total { margin:8px 0 0; background:var(--yellow); color:#2a2200; border:2px solid #2a2200; border-radius:10px; padding:6px 12px; font-size:13px; display:flex; flex-wrap:wrap; gap:2px 14px; }
+  .total b { font:16px var(--display); }
+  .total .muted { color:#4d3f00; }
+  .tabs { display:flex; gap:6px; margin-top:10px; }
+  .tabs button { flex:1; background:var(--green2); border:0; border-radius:12px 12px 0 0; padding:9px; font:600 16px var(--body); color:#bfe3cf; }
+  .tabs button.on { background:var(--paper); color:var(--green); box-shadow:0 4px 0 var(--paper); position:relative; top:4px; padding-bottom:13px; }
+  #status { font-size:12px; color:var(--muted); padding:10px 14px 2px; display:flex; justify-content:space-between; }
   #status button { background:none; border:0; color:var(--muted); text-decoration:underline; font:inherit; padding:0; }
-  h2 { margin:18px 12px 8px; font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:8px; padding:0 12px; }
-  .tile { position:relative; background:var(--card); border:1px solid var(--line); border-radius:10px; min-height:84px; padding:8px; cursor:pointer; user-select:none; display:flex; flex-direction:column; justify-content:flex-end; }
-  .tile .code { font-weight:700; font-size:20px; }
-  .tile .nm { font-size:11px; color:var(--muted); }
-  .tile.me-on { box-shadow:inset 0 0 0 2px var(--mine); }
-  .dots { position:absolute; top:6px; left:6px; display:flex; gap:4px; }
+  h2 { margin:20px 12px 10px; font:16px/1 var(--display); letter-spacing:.05em; color:var(--green); display:flex; align-items:center; gap:10px; }
+  h2::after { content:""; flex:1; border-top:3px dashed #d9a400; opacity:.7; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:10px; padding:0 12px; }
+  .tile { position:relative; background:var(--card); border:2px solid var(--ink); border-radius:10px; min-height:88px; padding:8px; cursor:pointer; user-select:none; display:flex; flex-direction:column; justify-content:flex-end;
+    box-shadow:0 3px 0 var(--ink); transition:transform .08s, box-shadow .08s; }
+  .tile::before { content:""; position:absolute; inset:3px; border:1px solid rgba(42,39,51,.25); border-radius:7px; pointer-events:none; }
+  .tile::after { content:""; position:absolute; bottom:6px; right:7px; width:6px; height:6px; border-radius:50%; background:rgba(42,39,51,.22); }
+  .tile:active { transform:translateY(3px); box-shadow:0 0 0 var(--ink); }
+  .tile .code { font:24px/1 var(--display); letter-spacing:.03em; }
+  .tile .nm { font-size:11px; font-weight:500; color:var(--muted); margin-top:3px; }
+  .tile.me-on { background:color-mix(in srgb, var(--mine) 14%, var(--card)); border-color:var(--mine); box-shadow:0 3px 0 var(--mine); }
+  .tile.me-on .code { color:var(--mine); }
+  .tile.me-on:active { box-shadow:0 0 0 var(--mine); }
+  .dots { position:absolute; top:8px; left:8px; display:flex; gap:4px; }
   .dot { width:14px; height:14px; border-radius:50%; border:2px solid var(--line); background:transparent; }
   .dot.on { background:var(--c); border-color:var(--c); }
-  .by { position:absolute; top:5px; right:7px; font-size:11px; color:var(--muted); }
+  .by { position:absolute; top:6px; right:9px; font-size:11px; font-weight:500; color:var(--muted); }
   #mapview { display:none; padding:12px; }
-  #mapview svg { width:100%; height:auto; display:block; background:var(--card); border:1px solid var(--line); border-radius:10px; }
-  #mapview path { stroke:#fff; stroke-width:1; stroke-linejoin:round; cursor:pointer; }
-  .legend { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; font-size:13px; }
-  .legend i { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:5px; vertical-align:-1px; }
-  #sheetbg { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; z-index:20; align-items:flex-end; justify-content:center; }
-  #sheet { background:var(--card); width:min(520px,100vw); border-radius:16px 16px 0 0; padding:16px 16px calc(18px + env(safe-area-inset-bottom)); max-height:85vh; overflow:auto; }
-  #sheet h3 { margin:0 0 10px; font-size:20px; }
-  #sheet .row { padding:8px 10px; border-left:4px solid var(--c); background:var(--bg); border-radius:6px; margin-bottom:6px; font-size:14px; }
+  .mapwrap { position:relative; border:3px solid var(--ink); border-radius:14px; background:var(--sea); box-shadow:0 4px 0 var(--ink); overflow:hidden; }
+  .mapwrap::before { content:""; position:absolute; inset:5px; border:1.5px dashed rgba(42,39,51,.35); border-radius:9px; pointer-events:none; z-index:1; }
+  .mapwrap .usmap { width:100%; height:auto; display:block; }
+  .compass { position:absolute; right:10px; bottom:8px; width:44px; height:44px; opacity:.8; pointer-events:none; }
+  #mapview .usmap path { stroke:#fffaea; stroke-width:1; stroke-linejoin:round; cursor:pointer; }
+  .legend { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:14px; font-size:13px; font-weight:500; }
+  .legend i { display:inline-block; width:13px; height:13px; border-radius:4px; border:1.5px solid var(--ink); margin-right:5px; vertical-align:-2px; }
+  #sheetbg { position:fixed; inset:0; background:rgba(15,40,28,.55); display:none; z-index:20; align-items:flex-end; justify-content:center; }
+  #sheet { background:var(--card); width:min(520px,100vw); border-radius:20px 20px 0 0; border-top:5px solid var(--yellow); padding:16px 16px calc(18px + env(safe-area-inset-bottom)); max-height:85vh; overflow:auto; }
+  #sheet h3 { margin:0 0 12px; font:20px/1.15 var(--display); color:var(--green); }
+  #sheet .row { padding:8px 10px; border-left:5px solid var(--c); background:var(--paper); border-radius:8px; margin-bottom:6px; font-size:14px; }
   #sheet .row .s { color:var(--muted); font-size:12px; }
   #sheet .row a { color:inherit; }
-  #sheet .lbl { font-size:13px; color:var(--muted); margin:12px 0 6px; }
+  #sheet .lbl { font-size:13px; font-weight:600; color:var(--muted); margin:14px 0 6px; text-transform:uppercase; letter-spacing:.05em; }
   .chips { display:flex; flex-wrap:wrap; gap:8px; }
-  .chips button { padding:12px 16px; font-size:16px; border-radius:999px; border:2px solid var(--c); background:#fff; color:var(--c); font-weight:600; }
+  .chips button { padding:11px 18px; font:600 16px var(--body); border-radius:999px; border:2px solid var(--c); background:#fff; color:var(--c); box-shadow:0 3px 0 var(--c); }
+  .chips button:active { transform:translateY(3px); box-shadow:none; }
   .chips button.on { background:var(--c); color:#fff; }
   .chips button.danger { --c:#b91c1c; }
-  .chips button.cancel { --c:#6b7280; }
-  #who { position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:40; }
-  #who .box { background:var(--card); padding:22px; border-radius:16px; width:min(340px,90vw); text-align:center; }
-  #who button { display:block; width:100%; margin-top:10px; padding:14px; font-size:18px; border:0; border-radius:12px; color:#fff; font-weight:600; }
+  .chips button.cancel { --c:#7a6f5c; }
+  #who { position:fixed; inset:0; background:rgba(15,40,28,.8); display:none; align-items:center; justify-content:center; z-index:40; }
+  #who .box { background:var(--card); padding:22px; border-radius:18px; border:4px solid var(--yellow); width:min(340px,90vw); text-align:center; }
+  #who .box > div:first-child { font:20px/1.2 var(--display); color:var(--green); }
+  #who button { display:block; width:100%; margin-top:12px; padding:14px; font:600 18px var(--body); border:0; border-radius:12px; color:#fff; box-shadow:0 4px 0 rgba(0,0,0,.3); }
+  #nuke { font-family:var(--body); }
 </style>
 </head>
 <body>
 <header>
+  <div class="brand">License Plate Race</div>
   <div class="score" id="score"></div>
   <div class="total" id="total"></div>
-  <div class="tabs"><button data-tab="plates" class="on">Plates</button><button data-tab="map">Map</button></div>
+  <div class="tabs"><button data-tab="plates" class="on">🪪 Plates</button><button data-tab="map">🗺️ Map</button></div>
 </header>
 <div id="status"><span id="net"></span><button id="switch">switch car</button></div>
 <div id="boards"></div>
@@ -213,14 +239,15 @@ function renderPlates() {
 }
 function fillFor(code) {
   const f = IDS.filter(id => found(id, code));
-  return f.length === 2 ? "var(--both)" : f.length ? TEAMS[f[0]].color : "#e5e7eb";
+  return f.length === 2 ? "var(--both)" : f.length ? TEAMS[f[0]].color : "var(--land)";
 }
+const COMPASS = `<svg class="compass" viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="#fffaea" stroke="#2a2733" stroke-width="2"/><path d="M20 4l5 16-5 3-5-3z" fill="#e11d48"/><path d="M20 36l-5-16 5-3 5 3z" fill="#2a2733"/><text x="20" y="13" font-size="7" font-weight="700" text-anchor="middle" fill="#fffaea" font-family="sans-serif">N</text></svg>`;
 function renderMap() {
   const M = window.MAP; if (!M) return;
-  $("#mapview").innerHTML = `<svg viewBox="0 0 ${M.w} ${M.h}">` +
-    Object.entries(M.paths).map(([c, d]) => `<path data-code="${c}" d="${d}" fill="${fillFor(c)}"/>`).join("") + `</svg>
+  $("#mapview").innerHTML = `<div class="mapwrap"><svg class="usmap" viewBox="0 0 ${M.w} ${M.h}">` +
+    Object.entries(M.paths).map(([c, d]) => `<path data-code="${c}" d="${d}" fill="${fillFor(c)}"/>`).join("") + `</svg>${COMPASS}</div>
     <div class="legend">${IDS.map(id => `<span><i style="background:${TEAMS[id].color}"></i>${esc(tname(id))} only</span>`).join("")}
-    <span><i style="background:var(--both)"></i>Both</span><span><i style="background:#e5e7eb"></i>Not yet</span></div>`;
+    <span><i style="background:var(--both)"></i>Both</span><span><i style="background:var(--land)"></i>Not yet</span></div>`;
 }
 function renderStatus() {
   const t = lastSync ? new Date(lastSync).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "never";
