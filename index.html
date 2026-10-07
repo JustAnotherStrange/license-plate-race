@@ -198,7 +198,8 @@ if (CFG.firebase.databaseURL && window.firebase) {
     const r = snap.val() || {};
     for (const [id, v] of Object.entries(r)) if (TEAMS[id] && (!names[id] || v.t > names[id].t)) names[id] = v;
     save("plate.names", names); render();
-    for (const [id, v] of Object.entries(names)) if (!r[id] || v.t > r[id].t) db.ref(`${CFG.room}/names/${id}`).set(v).catch(() => {});
+    // Deferred: a reset arrives as several events in one batch, and this one can fire before the resetAt handler wipes us.
+    setTimeout(() => { for (const [id, v] of Object.entries(names)) if (!r[id] || v.t > r[id].t) db.ref(`${CFG.room}/names/${id}`).set(v).catch(() => {}); });
   });
   IDS.forEach(id => db.ref(`${CFG.room}/${id}`).on("value", snap => {
     const remote = snap.val() || {};
@@ -208,7 +209,7 @@ if (CFG.firebase.databaseURL && window.firebase) {
     }
     lastSync = Date.now(); save("plate.lastSync", lastSync);
     persist(); render();
-    if (id === me) pushAll();
+    if (id === me) setTimeout(pushAll); // deferred for the same reason as names above
   }));
 }
 function pushAll() {
