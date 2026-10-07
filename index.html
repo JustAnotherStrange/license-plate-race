@@ -76,6 +76,18 @@
   .dot.on { background:var(--c); border-color:var(--c); }
   .by { position:absolute; top:6px; right:9px; font-size:11px; font-weight:500; color:var(--muted); }
   #mapview { display:none; padding:12px; }
+  #dataview { display:none; padding:12px; }
+  .dtools { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; font-size:13px; font-weight:500; color:var(--muted); }
+  .dtools button { background:var(--card); border:2px solid var(--ink); border-radius:10px; box-shadow:0 3px 0 var(--ink); padding:8px 14px; font:600 14px var(--body); color:var(--ink); }
+  .dtools button:active { transform:translateY(3px); box-shadow:none; }
+  .dscroll { overflow-x:auto; border:2px solid var(--ink); border-radius:10px; background:var(--card); }
+  .dtable { border-collapse:collapse; width:100%; font-size:13px; white-space:nowrap; }
+  .dtable th, .dtable td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--line); }
+  .dtable th { position:sticky; top:0; background:var(--paper); font-weight:600; cursor:pointer; user-select:none; }
+  .dtable th .ar { opacity:.7; color:var(--green); }
+  .dtable td.car { color:var(--c); font-weight:600; }
+  .dtable a { color:var(--green); }
+  .dtable .s { color:var(--muted); }
   .mapwrap { position:relative; border:3px solid var(--ink); border-radius:14px; background:var(--sea); box-shadow:0 4px 0 var(--ink); overflow:hidden; }
   .mapwrap::before { content:""; position:absolute; inset:5px; border:1.5px dashed rgba(42,39,51,.35); border-radius:9px; pointer-events:none; z-index:1; }
   .mapwrap .usmap { width:100%; height:auto; display:block; }
@@ -108,13 +120,14 @@
 <header>
   <div class="score" id="score"></div>
   <div class="total" id="total"></div>
-  <div class="tabs"><button data-tab="plates" class="on">🪪 Plates</button><button data-tab="map">🗺️ Map</button></div>
+  <div class="tabs"><button data-tab="plates" class="on">🪪 Plates</button><button data-tab="map">🗺️ Map</button><button data-tab="data">📋 Data</button></div>
 </header>
 <div id="statswrap"><button id="statsbtn" aria-expanded="false" aria-controls="stats">📊 Full stats <span class="chev">▾</span></button><div class="sbody"><div id="stats"></div></div></div>
 <div id="status"><span id="net"></span><button id="switch">switch car</button></div>
 <div id="boards"></div>
 <div style="text-align:center;margin:30px 12px 0"><button id="nuke" style="background:none;border:1px solid #b91c1c;color:#b91c1c;border-radius:8px;padding:8px 12px;font:inherit;font-size:13px">Dangerous: clear everything</button></div>
 <div id="mapview"></div>
+<div id="dataview"></div>
 
 <div id="sheetbg"><div id="sheet"></div></div>
 <div id="who"><div class="box"><div style="font-size:18px;font-weight:600">Which car are you in?</div><div id="whoBtns"></div></div></div>
@@ -245,7 +258,7 @@ function render() {
       <div class="srow"><div><span>Washington D.C.</span><b>${found(id,"DC") ? "✓" : "–"}</b></div></div>
       ${ppl ? `<div class="ppl">${ppl}</div>` : ""}</div>`;
   }).join("") + `<div class="sboth">${both} in both cars · US ${countAny(US)}/${US.length} · CA ${countAny(CA)}/${CA.length}${IDS.some(id=>found(id,"DC"))?" · DC ✓":""} together</div></div>`;
-  renderPlates(); renderMap(); renderStatus();
+  renderPlates(); renderMap(); renderData(); renderStatus();
 }
 function renderPlates() {
   $("#boards").innerHTML = Object.entries(REGIONS).map(([title, items]) =>
@@ -269,6 +282,45 @@ function renderMap() {
     <div class="legend">${IDS.map(id => `<span><i style="background:${TEAMS[id].color}"></i>${esc(tname(id))} only</span>`).join("")}
     <span><i style="background:var(--both)"></i>Both</span><span><i style="background:var(--land)"></i>Not yet</span></div>`;
 }
+// ---- data table ----
+let sortKey = "t", sortDir = -1;
+const COLS = [["state", "State"], ["car", "Car"], ["by", "Who"], ["t", "When"], ["loc", "Where"]];
+function dataRows() {
+  return IDS.flatMap(id => ALL.filter(c => found(id, c)).map(c => {
+    const e = found(id, c);
+    return { code: c, state: NAME[c], id, car: tname(id), by: e.by || "", t: e.t, lat: e.lat, lon: e.lon, loc: e.lat != null ? e.lat : null };
+  }));
+}
+function sortedRows() {
+  const k = sortKey === "loc" ? "lat" : sortKey;
+  return dataRows().sort((a, b) => {
+    const x = a[k], y = b[k];
+    if (x == null || x === "") return y == null || y === "" ? 0 : 1; // blanks always last
+    if (y == null || y === "") return -1;
+    return (typeof x === "string" ? x.localeCompare(y) : x - y) * sortDir || a.state.localeCompare(b.state);
+  });
+}
+function renderData() {
+  const rows = sortedRows();
+  $("#dataview").innerHTML = `<div class="dtools"><span>${rows.length} log${rows.length === 1 ? "" : "s"}</span><button data-csv>⬇ Export CSV</button></div>
+    <div class="dscroll"><table class="dtable"><thead><tr>${COLS.map(([k, l]) => `<th data-sort="${k}">${l}${k === sortKey ? ` <span class="ar">${sortDir > 0 ? "▲" : "▼"}</span>` : ""}</th>`).join("")}</tr></thead><tbody>` +
+    (rows.map(r => `<tr><td>${esc(r.state)} (${r.code})</td><td class="car" style="--c:${TEAMS[r.id].color}">${esc(r.car)}</td><td>${esc(r.by) || `<span class="s">–</span>`}</td><td>${fmt(r.t)}</td><td>${r.lat != null ? `<a href="https://maps.google.com/?q=${r.lat},${r.lon}" target="_blank" rel="noopener">${r.lat.toFixed(4)}, ${r.lon.toFixed(4)} ↗</a>` : `<span class="s">no GPS</span>`}</td></tr>`).join("")
+      || `<tr><td colspan="5" class="s">Nothing logged yet.</td></tr>`) + `</tbody></table></div>`;
+}
+$("#dataview").addEventListener("click", e => {
+  const th = e.target.closest("[data-sort]");
+  if (th) { const k = th.dataset.sort; sortDir = k === sortKey ? -sortDir : (k === "t" ? -1 : 1); sortKey = k; return renderData(); }
+  if (!e.target.closest("[data-csv]")) return;
+  const q = v => /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+  const lines = [["State", "Code", "Car", "Who", "When", "Latitude", "Longitude", "Map link"].join(",")].concat(sortedRows().map(r => [
+    r.state, r.code, r.car, r.by, new Date(r.t).toISOString(), r.lat ?? "", r.lon ?? "", r.lat != null ? `https://maps.google.com/?q=${r.lat},${r.lon}` : ""
+  ].map(v => q(String(v))).join(",")));
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv" }));
+  a.download = "license-plates.csv"; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
 function renderStatus() {
   const t = lastSync ? new Date(lastSync).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "never";
   $("#net").textContent = !db ? "Local only (no Firebase configured)"
@@ -315,6 +367,7 @@ $(".tabs").addEventListener("click", e => {
   document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === t));
   $("#boards").style.display = t === "plates" ? "" : "none";
   $("#mapview").style.display = t === "map" ? "block" : "none";
+  $("#dataview").style.display = t === "data" ? "block" : "none";
 });
 
 $("#score").addEventListener("click", e => {
