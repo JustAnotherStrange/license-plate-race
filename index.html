@@ -355,11 +355,14 @@ function openSheet(code) {
     const loc = e?.lat != null ? ` · <a href="https://maps.google.com/?q=${e.lat},${e.lon}" target="_blank" rel="noopener">${e.lat.toFixed(3)}, ${e.lon.toFixed(3)} ↗</a>` : (e ? ` · <span class="s">no GPS fix</span>` : "");
     return `<div class="row" style="--c:${TEAMS[id].color}"><b>${esc(tname(id))}</b>: ${e ? `${e.by ? esc(e.by) + " · " : ""}${fmt(e.t)}${loc}` : `<span class="s">not spotted</span>`}</div>`;
   }).join("");
-  const chips = people.map(p => `<button data-by="${esc(p)}" class="${mine?.by === p ? "on" : ""}">${esc(p)}</button>`).join("");
+  const chipsFor = list => list.map(p => `<button data-by="${esc(p)}" class="${mine?.by === p ? "on" : ""}">${esc(p)}</button>`).join("");
+  const others = IDS.filter(id => id !== me).flatMap(id => PEOPLE[id] || []);
   $("#sheet").style.setProperty("--c", TEAMS[me].color);
   $("#sheet").innerHTML = `<h3>${NAME[code]} (${code})</h3>${rows}
     <div class="lbl">${mine ? "Change who saw it" : "Who saw it?"}</div>
-    <div class="chips" data-code="${code}">${chips}${mine ? `<button class="danger" data-remove>Remove</button>` : ""}<button class="cancel" data-close>${mine ? "Done" : "Cancel"}</button></div>`;
+    <div class="chips" data-code="${code}">${chipsFor(people)}</div>
+    ${others.length ? `<div class="lbl">Other car</div><div class="chips" data-code="${code}">${chipsFor(others)}</div>` : ""}
+    <div class="chips" data-code="${code}" style="margin-top:14px">${mine ? `<button class="danger" data-remove>Remove</button>` : ""}<button class="cancel" data-close>${mine ? "Done" : "Cancel"}</button></div>`;
   $("#sheetbg").style.display = "flex";
 }
 const closeSheet = () => $("#sheetbg").style.display = "none";
